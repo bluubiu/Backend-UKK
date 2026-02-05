@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
+Route::post('/forgot-password-notification', [\App\Http\Controllers\ForgotPasswordController::class, 'store']);
 Route::get('/items/available', [\App\Http\Controllers\ItemController::class, 'available']);
 
 Route::middleware('auth:sanctum')->group(function () {

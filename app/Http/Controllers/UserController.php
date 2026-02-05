@@ -34,7 +34,16 @@ class UserController extends Controller
     {
         $request->validate([
             'username' => 'required|unique:users',
-            'password' => 'required|min:8',
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+                'confirmed', // expects password_confirmation field
+                'regex:/[a-z]/',      // must contain at least one lowercase letter
+                'regex:/[A-Z]/',      // must contain at least one uppercase letter
+                'regex:/[0-9]/',      // must contain at least one digit
+                'regex:/[@$!%*#?&]/', // must contain a special character
+            ],
             'full_name' => 'required',
             'email' => 'required|email|unique:users',
             'phone' => 'nullable',
@@ -84,7 +93,16 @@ class UserController extends Controller
 
         $request->validate([
             'username' => 'sometimes|unique:users,username,' . $id,
-            'password' => 'nullable|min:8',
+            'password' => [
+                'nullable',
+                'string',
+                'min:8',
+                'confirmed', // expects password_confirmation field
+                'regex:/[a-z]/',      // must contain at least one lowercase letter
+                'regex:/[A-Z]/',      // must contain at least one uppercase letter
+                'regex:/[0-9]/',      // must contain at least one digit
+                'regex:/[@$!%*#?&]/', // must contain a special character
+            ],
             'full_name' => 'sometimes',
             'email' => 'sometimes|email|unique:users,email,' . $id,
             'phone' => 'nullable',
