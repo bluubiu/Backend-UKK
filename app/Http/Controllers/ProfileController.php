@@ -47,7 +47,7 @@ class ProfileController extends Controller
         $user->update($data);
 
         return response()->json([
-            'message' => 'Profile updated successfully',
+            'message' => 'Profile berhasil diupdate',
             'user' => $user->load('role')
         ]);
     }
@@ -76,7 +76,7 @@ class ProfileController extends Controller
             ]);
 
             return response()->json([
-                'message' => 'Photo updated successfully',
+                'message' => 'Foto berhasil diupdate',
                 'profile_photo_path' => $path,
                 'url' => asset('storage/' . $path)
             ]);

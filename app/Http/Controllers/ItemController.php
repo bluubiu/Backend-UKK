@@ -59,9 +59,9 @@ class ItemController extends Controller
             'category_id' => 'required|exists:categories,id',
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'image' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:5120', // max 5MB
+            'image' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:5120', 
             'stock' => 'required|integer|min:0',
-            'condition' => 'required|string', // baik, rusak ringan, rusak berat
+            'condition' => 'required|string',
             'is_active' => 'boolean'
         ]);
 

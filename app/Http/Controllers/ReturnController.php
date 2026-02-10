@@ -53,7 +53,7 @@ class ReturnController extends Controller
         ]);
 
         // Log the activity
-        $this->logActivity('Return Items', "User {$user->username} submitted return for loan ID: {$return->loan_id}", null, $return->toArray());
+        $this->logActivity('Pengembalian Barang', "User {$user->username} mengajukan pengembalian untuk ID Pinjaman: {$return->loan_id}", null, $return->toArray());
 
         return response()->json($return->load('loan'), 201);
     }
@@ -89,7 +89,7 @@ class ReturnController extends Controller
         $return = ReturnModel::with(['loan.details.item', 'loan.user'])->findOrFail($id);
 
         if ($return->checked_by) {
-            return response()->json(['message' => 'Return already checked'], 400);
+            return response()->json(['message' => 'Return sudah dicek'], 400);
         }
 
         try {
@@ -99,7 +99,8 @@ class ReturnController extends Controller
             $returnDate = Carbon::parse($return->returned_at);
             $dueDate = Carbon::parse($return->loan->return_date);
             $isOnTime = $returnDate->lte($dueDate);
-            $lateDays = max(0, $returnDate->diffInDays($dueDate, false) * -1);
+            // Fix: Use floatDiffInDays and ceil to ensure even 1 hour late counts as 1 day
+            $lateDays = $isOnTime ? 0 : ceil($returnDate->floatDiffInDays($dueDate, false) * -1);
 
             // 1. Create checklist
             $checklist = ReturnChecklist::create([
@@ -115,7 +116,7 @@ class ReturnController extends Controller
             $checklistScore = $checklist->calculateScore(); // Range 4-20
             $finalCondition = $this->determineFinalCondition($checklistScore, $request->physical_damage);
 
-            // 3. Calculate fine
+            // 3. Calculation of fines
             // STRICT RULE: If everything is perfect (all 5s) AND on time -> NO FINE AT ALL
             $isPerfectCondition = ($checklistScore === 20);
             
@@ -282,16 +283,16 @@ class ReturnController extends Controller
                 $score += 3;
             }
         } elseif ($lateDays >= 1 && $lateDays <= 3) {
-            $score -= 3;
+            $score -= 10;
         } elseif ($lateDays > 3) {
-            $score -= 5;
+            $score -= 20;
         }
 
         // Condition penalty
         if ($condition === 'rusak ringan') {
-            $score -= 10;
+            $score -= 20;
         } elseif ($condition === 'rusak berat') {
-            $score -= 30;
+            $score -= 40;
         }
 
         return $score;
@@ -313,15 +314,15 @@ class ReturnController extends Controller
                 $reasons[] = 'Tepat waktu';
             }
         } elseif ($lateDays >= 1 && $lateDays <= 3) {
-            $reasons[] = "Terlambat {$lateDays} hari (-3)";
+            $reasons[] = "Terlambat {$lateDays} hari (-10)";
         } elseif ($lateDays > 3) {
-            $reasons[] = "Terlambat {$lateDays} hari >3 (-5)";
+            $reasons[] = "Terlambat {$lateDays} hari >3 (-20)";
         }
 
         if ($condition === 'rusak ringan') {
-            $reasons[] = 'Rusak ringan (-10)';
+            $reasons[] = 'Rusak ringan (-20)';
         } elseif ($condition === 'rusak berat') {
-            $reasons[] = 'Rusak berat (-20)';
+            $reasons[] = 'Rusak berat (-40)';
         }
 
         return implode(', ', $reasons) ?: 'Pengembalian normal';

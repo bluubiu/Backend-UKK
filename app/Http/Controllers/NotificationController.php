@@ -43,7 +43,7 @@ class NotificationController extends Controller
             
         $notification->markAsRead();
 
-        return response()->json(['message' => 'Marked as read']);
+        return response()->json(['message' => 'Ditandai sebagai sudah dibaca']);
     }
 
     /**
@@ -55,6 +55,6 @@ class NotificationController extends Controller
             ->unread()
             ->update(['read_at' => now()]);
 
-        return response()->json(['message' => 'All marked as read']);
+        return response()->json(['message' => 'Semua notifikasi ditandai sebagai sudah dibaca']);
     }
 }

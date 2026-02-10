@@ -1,0 +1,8 @@
+{
+    "username": "weakAdminUser",
+    "password": "weak",
+    "password_confirmation": "weak",
+    "email": "weak@test.com",
+    "full_name": "Weak",
+    "role_id": 3
+}

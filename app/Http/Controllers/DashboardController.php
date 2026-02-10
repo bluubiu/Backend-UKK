@@ -69,6 +69,31 @@ class DashboardController extends Controller
             ->take(8)
             ->get();
 
+        // 10. Financial Stats (Fines)
+        $totalFinesPaid = \App\Models\Fine::where('is_paid', true)->sum('total_fine');
+        $totalFinesUnpaid = \App\Models\Fine::where('is_paid', false)->sum('total_fine');
+
+        // 11. Total Loans (All time)
+        $totalLoans = Loan::count();
+
+        // 12. Loan Status Distribution
+        $loanStatusDistribution = [
+            'pending' => Loan::where('status', 'pending')->count(),
+            'approved' => Loan::where('status', 'approved')->count(),
+            'returned' => Loan::where('status', 'returned')->count(),
+            'rejected' => Loan::where('status', 'rejected')->count(),
+        ];
+
+        // 13. Category Distribution (for "Product Statistic" chart)
+        $categoryDistribution = \App\Models\Category::withCount('items')
+            ->get()
+            ->map(function($cat) {
+                return [
+                    'name' => $cat->name,
+                    'value' => $cat->items_count
+                ];
+            });
+
         return response()->json([
             'total_items' => $totalItems,
             'active_loans' => $activeLoans,
@@ -78,7 +103,13 @@ class DashboardController extends Controller
             'recent_loans' => $recentLoans,
             'loan_trends' => $loanTrends,
             'top_items' => $topItems,
-            'top_performers' => $topPerformers
+            'top_performers' => $topPerformers,
+            // New Data
+            'total_fines_paid' => $totalFinesPaid,
+            'total_fines_unpaid' => $totalFinesUnpaid,
+            'total_loans' => $totalLoans,
+            'loan_status_distribution' => $loanStatusDistribution,
+            'category_distribution' => $categoryDistribution
         ]);
     }
 

@@ -69,7 +69,7 @@ class FineController extends Controller
         }
 
         if ($fine->is_paid) {
-            return response()->json(['message' => 'Fine is already paid.'], 400);
+            return response()->json(['message' => 'Denda sudah dibayar.'], 400);
         }
 
         $request->validate([
@@ -84,10 +84,10 @@ class FineController extends Controller
         ]);
 
         // Log the activity
-        $this->logActivity('Fine Payment', "User submitted payment confirmation for fine ID: {$fine->id}", $oldValues, $fine->getChanges());
+        $this->logActivity('Konfirmasi Pembayaran Pengguna', "Konfirmasi pembayaran denda berhasil disubmit. Menunggu verifikasi. ID: {$fine->id}", $oldValues, $fine->getChanges());
 
         return response()->json([
-            'message' => 'Payment confirmation submitted. Waiting for verification.',
+            'message' => 'Konfirmasi pembayaran denda berhasil disubmit. Menunggu verifikasi.',
             'fine' => $fine
         ]);
     }
@@ -100,7 +100,7 @@ class FineController extends Controller
         $fine = Fine::with('returnModel.loan.user')->findOrFail($id);
 
         if ($fine->is_paid) {
-            return response()->json(['message' => 'Fine is already paid.'], 400);
+            return response()->json(['message' => 'Denda sudah dibayar.'], 400);
         }
 
         $request->validate([
