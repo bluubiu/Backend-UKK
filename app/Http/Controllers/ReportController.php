@@ -182,7 +182,7 @@ class ReportController extends Controller
         $items = $query->get();
 
         // Log the activity
-        $this->logActivity('Laporan kondisi alat dihasilkan', 'Laporan kondisi alat dihasilkan', null, [
+        $this->logActivity('Report Generation', 'Laporan kondisi alat dihasilkan', null, [
             'filters' => $request->all(),
             'total_records' => $items->count()
         ]);

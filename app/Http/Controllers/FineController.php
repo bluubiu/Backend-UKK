@@ -99,7 +99,7 @@ class FineController extends Controller
         $fine->update($updateData);
 
         // Log the activity
-        $this->logActivity('Konfirmasi Pembayaran Pengguna', "Konfirmasi pembayaran denda berhasil disubmit. Menunggu verifikasi. ID: {$fine->id}", $oldValues, $fine->getChanges());
+        $this->logActivity('Fine Payment', "Konfirmasi pembayaran denda berhasil disubmit. Menunggu verifikasi. ID: {$fine->id}", $oldValues, $fine->only(['payment_confirmed_by_user', 'user_payment_date', 'user_notes', 'proof_of_payment']));
 
         return response()->json([
             'message' => 'Konfirmasi pembayaran denda berhasil disubmit. Menunggu verifikasi.',
@@ -158,7 +158,7 @@ class FineController extends Controller
             ]);
             
             // Log the activity
-            $this->logActivity('Verifikasi Denda', "Petugas menerima pembayaran denda ID: {$fine->id}", $oldValues, $fine->getChanges());
+            $this->logActivity('Fine Verification', "Petugas menerima pembayaran denda ID: {$fine->id}", $oldValues, $fine->only(['is_paid', 'paid_at', 'verified_by']));
 
             return response()->json(['message' => 'Denda berhasil diverifikasi.', 'fine' => $fine]);
         } else {
@@ -170,7 +170,7 @@ class FineController extends Controller
             ]);
             
             // Log the activity
-            $this->logActivity('Verifikasi Denda', "Petugas menolak pembayaran denda ID: {$fine->id}", $oldValues, $fine->getChanges());
+            $this->logActivity('Fine Verification', "Petugas menolak pembayaran denda ID: {$fine->id}", $oldValues, $fine->only(['payment_confirmed_by_user', 'user_payment_date', 'user_notes']));
 
             // In a real app we might want to notify the user why it was rejected
             return response()->json(['message' => 'Verifikasi denda ditolak.', 'fine' => $fine]);

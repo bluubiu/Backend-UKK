@@ -62,7 +62,7 @@ class UserController extends Controller
         ]);
 
         // Log the activity
-        $this->logActivity('Buat User', "Admin membuat user: {$user->username}", null, $user->toArray());
+        $this->logActivity('Create User', "Admin membuat user: {$user->username}", null, $user->toArray());
 
         return response()->json($user->load('role'), 201);
     }
@@ -117,11 +117,13 @@ class UserController extends Controller
             $data['password'] = bcrypt($request->password);
         }
 
-        $oldValues = $user->getOriginal();
+        $fieldsToTrack = ['username', 'full_name', 'email', 'phone', 'role_id', 'is_active', 'score'];
+        $oldValues = $user->only($fieldsToTrack);
         $user->update($data);
+        $user->refresh();
 
         // Log the activity
-        $this->logActivity('Update User', "Admin mengupdate user: {$user->username}", $oldValues, $user->getChanges());
+        $this->logActivity('Update User', "Admin mengupdate user: {$user->username}", $oldValues, $user->only($fieldsToTrack));
 
         return response()->json($user->load('role'));
     }

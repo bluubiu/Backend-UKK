@@ -92,7 +92,7 @@ class WaitingListController extends Controller
         ]);
 
         // Log the activity
-        $this->logActivity('Entri Antrian', "User menambahkan antrian untuk item: {$item->name}. Est: {$estimatedDate}", null, $waitingList->toArray());
+        $this->logActivity('Waiting List Entry', "User menambahkan antrian untuk item: {$item->name}. Est: {$estimatedDate}", null, $waitingList->toArray());
 
         return response()->json($waitingList, 201);
     }
@@ -142,7 +142,7 @@ class WaitingListController extends Controller
         $waitingList->delete();
 
         // Log the activity
-        $this->logActivity('Batalkan Antrian', "User membatalkan antrian untuk item ID: {$waitingList->item_id}", $oldValues);
+        $this->logActivity('Waiting List Cancellation', "User membatalkan antrian untuk item ID: {$waitingList->item_id}", $oldValues);
 
         return response()->json(['message' => 'Antrian berhasil dibatalkan']);
     }
@@ -197,7 +197,7 @@ class WaitingListController extends Controller
 
                     // 5. Create Activity Log
                     ActivityLog::create([
-                        'action' => 'Waiting List Auto-Transition',
+                        'action' => 'Waiting List Processing',
                         'description' => "Entri antrian untuk User ID {$entry->user_id} berhasil diubah menjadi peminjaman ID {$loan->id} untuk Item ID {$itemId}",
                         'user_id' => $entry->user_id,
                         'ip_address' => request()->ip(),

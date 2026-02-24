@@ -40,7 +40,7 @@ class CategoryController extends Controller
         $category = Category::create($request->only(['name', 'description']));
 
         // Log the activity
-        $this->logActivity('Buat Kategori', "Admin membuat kategori: {$category->name}", null, $category->toArray());
+        $this->logActivity('Create Category', "Admin membuat kategori: {$category->name}", null, $category->toArray());
 
         return response()->json($category, 201);
     }
@@ -74,11 +74,12 @@ class CategoryController extends Controller
             'description' => 'nullable|string',
         ]);
 
-        $oldValues = $category->getOriginal();
+        $oldValues = $category->only(['name', 'description']);
         $category->update($request->only(['name', 'description']));
+        $category->refresh();
 
         // Log the activity
-        $this->logActivity('Update Kategori', "Admin mengupdate kategori: {$category->name}", $oldValues, $category->getChanges());
+        $this->logActivity('Update Category', "Admin mengupdate kategori: {$category->name}", $oldValues, $category->only(['name', 'description']));
 
         return response()->json($category);
     }
@@ -93,7 +94,7 @@ class CategoryController extends Controller
         $category->delete(); // Soft delete
 
         // Log the activity
-        $this->logActivity('Hapus Kategori', "Admin menghapus kategori: {$category->name}", $oldValues);
+        $this->logActivity('Delete Category', "Admin menghapus kategori: {$category->name}", $oldValues);
 
         return response()->json(['message' => 'Kategori berhasil dihapus']);
     }

@@ -102,7 +102,7 @@ class LoanController extends Controller
             DB::commit();
 
             // Log the activity
-            $this->logActivity('Ajukan Peminjaman', "Peminjam {$user->username} mengajukan peminjaman", null, $loan->load('details')->toArray());
+            $this->logActivity('Loan Request', "Peminjam {$user->username} mengajukan peminjaman", null, $loan->load('details')->toArray());
 
             return response()->json($loan->load('details'), 201);
 
@@ -153,7 +153,7 @@ class LoanController extends Controller
             DB::commit();
 
             // Log the activity
-            $this->logActivity('Setujui Peminjaman', "Petugas menyetujui peminjaman ID: {$loan->id}", $oldValues, $loan->getChanges());
+            $this->logActivity('Approve Loan', "Petugas menyetujui peminjaman ID: {$loan->id}", $oldValues, $loan->only(['status', 'approved_by', 'approved_at']));
 
             return response()->json(['message' => 'Peminjaman disetujui', 'loan' => $loan]);
 
@@ -191,7 +191,7 @@ class LoanController extends Controller
         ]);
 
         // Log the activity
-        $this->logActivity('Tolak Peminjaman', "Officer rejected loan ID: {$loan->id}. Reason: {$request->rejection_reason}", $oldValues, $loan->getChanges());
+        $this->logActivity('Reject Loan', "Officer rejected loan ID: {$loan->id}. Reason: {$request->rejection_reason}", $oldValues, $loan->only(['status', 'rejection_reason', 'rejection_notes', 'rejected_by', 'rejected_at']));
 
         return response()->json(['message' => 'Peminjaman ditolak', 'loan' => $loan]);
     }

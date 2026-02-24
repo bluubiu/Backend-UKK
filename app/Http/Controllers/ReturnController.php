@@ -53,7 +53,7 @@ class ReturnController extends Controller
         ]);
 
         // Log the activity
-        $this->logActivity('Pengembalian Barang', "User {$user->username} mengajukan pengembalian untuk ID Pinjaman: {$return->loan_id}", null, $return->toArray());
+        $this->logActivity('Return Items', "User {$user->username} mengajukan pengembalian untuk ID Pinjaman: {$return->loan_id}", null, $return->toArray());
 
         return response()->json($return->load('loan'), 201);
     }
@@ -204,13 +204,13 @@ class ReturnController extends Controller
             DB::commit();
 
             // Log the activity
-            $this->logActivity('Verifikasi Pengembalian', "Petugas memverifikasi pengembalian ID: {$return->id}. Final condition: {$finalCondition}", $oldReturn, $return->getChanges());
+            $this->logActivity('Verify Return', "Petugas memverifikasi pengembalian ID: {$return->id}. Final condition: {$finalCondition}", $oldReturn, $return->only(['checked_by', 'final_condition']));
             
             if ($totalFine > 0) {
-                $this->logActivity('Denda Dibuat', "Denda otomatis dibuat untuk pengembalian ID: {$return->id}. Total: {$totalFine}");
+                $this->logActivity('Fine Creation', "Denda otomatis dibuat untuk pengembalian ID: {$return->id}. Total: {$totalFine}");
             }
 
-            $this->logActivity('Perubahan Skor', "User {$user->username} skor berubah sebesar {$scoreChange}. Skor baru: {$user->score}");
+            $this->logActivity('Score Change', "User {$user->username} skor berubah sebesar {$scoreChange}. Skor baru: {$user->score}");
 
             return response()->json([
                 'message' => 'Pengembalian berhasil diproses',

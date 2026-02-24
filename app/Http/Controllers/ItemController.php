@@ -80,7 +80,7 @@ class ItemController extends Controller
         $item = Item::create($data);
 
         // Log the activity
-        $this->logActivity('Create Item', "Admin created item: {$item->name}", null, $item->toArray());
+        $this->logActivity('Create Item', "Admin membuat item: {$item->name}", null, $item->toArray());
 
         return response()->json($item, 201);
     }
@@ -119,7 +119,9 @@ class ItemController extends Controller
             $data['image'] = 'items/' . $imageName;
         }
 
-        $oldValues = $item->getOriginal();
+        // Capture old values before update (only meaningful fields)
+        $fieldsToTrack = ['name', 'description', 'category_id', 'stock', 'available_stock', 'condition', 'is_active', 'image'];
+        $oldValues = array_intersect_key($item->toArray(), array_flip($fieldsToTrack));
         
         // Logical check: If stock is updated, sync available_stock
         if (isset($data['stock'])) {
@@ -133,9 +135,11 @@ class ItemController extends Controller
         }
 
         $item->update($data);
+        $item->refresh();
 
-        // Log the activity
-        $this->logActivity('Update Item', "Admin mengupdate item: {$item->name}", $oldValues, $item->getChanges());
+        // Log the activity - capture full new state of meaningful fields
+        $newValues = array_intersect_key($item->toArray(), array_flip($fieldsToTrack));
+        $this->logActivity('Update Item', "Admin mengupdate item: {$item->name}", $oldValues, $newValues);
 
         return response()->json($item);
     }
@@ -153,7 +157,7 @@ class ItemController extends Controller
         $item->delete();
 
         // Log the activity
-        $this->logActivity('Hapus Item', "Admin menghapus item: {$item->name}", $oldValues);
+        $this->logActivity('Delete Item', "Admin menghapus item: {$item->name}", $oldValues);
 
         return response()->json(['message' => 'Item berhasil dihapus']);
     }
