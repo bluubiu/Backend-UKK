@@ -14,6 +14,7 @@ Route::get('/items/available', [\App\Http\Controllers\ItemController::class, 'av
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::apiResource('users', UserController::class)->middleware('role:admin');
+    Route::post('/users/{id}/reset-password-default', [UserController::class, 'resetPasswordToDefault'])->middleware('role:admin');
     Route::get('/roles', function() {
         return response()->json(\App\Models\Role::all());
     })->middleware('role:admin');

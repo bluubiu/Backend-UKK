@@ -15,7 +15,7 @@ class CategoryController extends Controller
      */
     public function index()
     {
-        $categories = Category::latest()->get();
+        $categories = Category::withCount('items')->latest()->get();
         return response()->json($categories);
     }
 

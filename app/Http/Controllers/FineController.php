@@ -73,15 +73,30 @@ class FineController extends Controller
         }
 
         $request->validate([
-            'notes' => 'nullable|string'
+            'notes' => 'nullable|string',
+            'proof_of_payment' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048'
         ]);
 
+        $proofPath = null;
+        if ($request->hasFile('proof_of_payment')) {
+            $file = $request->file('proof_of_payment');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $path = $file->storeAs('proof_of_payments', $filename, 'public');
+            $proofPath = $path;
+        }
+
         $oldValues = $fine->toArray();
-        $fine->update([
+        $updateData = [
             'payment_confirmed_by_user' => true,
             'user_payment_date' => now(),
-            'user_notes' => $request->notes
-        ]);
+            'user_notes' => $request->notes,
+        ];
+
+        if ($proofPath) {
+            $updateData['proof_of_payment'] = $proofPath;
+        }
+
+        $fine->update($updateData);
 
         // Log the activity
         $this->logActivity('Konfirmasi Pembayaran Pengguna', "Konfirmasi pembayaran denda berhasil disubmit. Menunggu verifikasi. ID: {$fine->id}", $oldValues, $fine->getChanges());

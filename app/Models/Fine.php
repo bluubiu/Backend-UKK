@@ -15,6 +15,7 @@ class Fine extends Model
         'payment_confirmed_by_user',
         'user_payment_date',
         'user_notes',
+        'proof_of_payment',
         'verified_by',
         'paid_at'
     ];

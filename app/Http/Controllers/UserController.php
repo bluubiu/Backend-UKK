@@ -140,4 +140,27 @@ class UserController extends Controller
 
         return response()->json(['message' => 'User berhasil dihapus']);
     }
+
+    /**
+     * Reset user password to default format
+     */
+    public function resetPasswordToDefault(string $id)
+    {
+        $user = User::findOrFail($id);
+        
+        // Generate default password: [username]123#
+        $defaultPassword = $user->username . '123#';
+        
+        // Update password
+        $user->password = bcrypt($defaultPassword);
+        $user->save();
+
+        // Log the activity
+        $this->logActivity('Reset Password', "Admin mereset password user: {$user->username} ke default", null, ['user_id' => $user->id]);
+
+        return response()->json([
+            'message' => 'Password berhasil direset ke default',
+            'default_password' => $defaultPassword
+        ]);
+    }
 }

@@ -97,7 +97,7 @@ class ReportController extends Controller
      */
     public function fines(Request $request)
     {
-        $query = Fine::with(['returnModel.loan.user']);
+        $query = Fine::with(['returnModel.loan.user', 'returnModel.loan.details.item']);
 
         if ($request->has('is_paid')) {
             $query->where('is_paid', $request->is_paid);
