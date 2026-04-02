@@ -21,7 +21,6 @@ class LoanController extends Controller
     {
         $query = Loan::with(['user', 'details.item', 'returnModel.fine', 'returnModel.checklist']);
         
-        // If not admin or petugas, only show own loans
         $user = Auth::user();
         if (!$user->hasRole(['admin', 'petugas'])) {
             $query->where('user_id', $user->id);
@@ -49,14 +48,13 @@ class LoanController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'loan_date' => 'required|date',
+            'loan_date' => 'required|date|after_or_equal:today',
             'return_date' => 'required|date|after_or_equal:loan_date',
             'items' => 'required|array|min:1',
             'items.*.item_id' => 'required|exists:items,id',
             'items.*.quantity' => 'required|integer|min:1',
         ]);
 
-        // Check user score compliance
         $user = Auth::user();
         if ($user->score < 50) {
             return response()->json([
@@ -64,8 +62,6 @@ class LoanController extends Controller
             ], 403);
         }
 
-        // Check for unpaid fines
-        // Note: Using a direct query on Fine model via relationship
         $hasUnpaidFines = \App\Models\Fine::whereHas('returnModel.loan', function($q) use ($user) {
             $q->where('user_id', $user->id);
         })->where('is_paid', false)->exists();
@@ -80,18 +76,13 @@ class LoanController extends Controller
             DB::beginTransaction();
 
             $loan = Loan::create([
-                'user_id' => Auth::id(), // Must be logged in
+                'user_id' => Auth::id(), 
                 'loan_date' => $request->loan_date,
                 'return_date' => $request->return_date,
                 'status' => 'pending',
             ]);
 
             foreach ($request->items as $itemData) {
-                // Optional: Check if stock implies enough NOW? 
-                // Requirement says "Cek tersedia SEBELUM APPROVE". 
-                // So at simplified level, we allow request even if stock low, but maybe warn?
-                // Standard logic: Just save request.
-
                 LoanDetail::create([
                     'loan_id' => $loan->id,
                     'item_id' => $itemData['item_id'],
@@ -142,7 +133,6 @@ class LoanController extends Controller
                 $item->decrement('available_stock', $detail->quantity);
             }
 
-            // Ubah status jadi approved, simpan approved_by dan approved_at
             $oldValues = $loan->toArray();
             $loan->update([
                 'status' => 'approved',
@@ -151,8 +141,6 @@ class LoanController extends Controller
             ]);
 
             DB::commit();
-
-            // Log the activity
             $this->logActivity('Approve Loan', "Petugas menyetujui peminjaman ID: {$loan->id}", $oldValues, $loan->only(['status', 'approved_by', 'approved_at']));
 
             return response()->json(['message' => 'Peminjaman disetujui', 'loan' => $loan]);
@@ -179,8 +167,6 @@ class LoanController extends Controller
             'rejection_notes' => 'nullable|string'
         ]);
 
-        // Saat reject: tidak ubah stok (karena belum status approved/diambil)
-        // Hanya ubah status dan simpan detail penolakan
         $oldValues = $loan->toArray();
         $loan->update([
             'status' => 'rejected',
@@ -190,7 +176,6 @@ class LoanController extends Controller
             'rejected_at' => now(),
         ]);
 
-        // Log the activity
         $this->logActivity('Reject Loan', "Officer rejected loan ID: {$loan->id}. Reason: {$request->rejection_reason}", $oldValues, $loan->only(['status', 'rejection_reason', 'rejection_notes', 'rejected_by', 'rejected_at']));
 
         return response()->json(['message' => 'Peminjaman ditolak', 'loan' => $loan]);

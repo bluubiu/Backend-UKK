@@ -79,5 +79,6 @@ Route::middleware('auth:sanctum')->group(function () {
     // Profile Routes
     Route::get('/profile', [\App\Http\Controllers\ProfileController::class, 'show']);
     Route::put('/profile', [\App\Http\Controllers\ProfileController::class, 'update']);
+    Route::put('/profile/password', [\App\Http\Controllers\ProfileController::class, 'updatePassword']);
     Route::post('/profile/photo', [\App\Http\Controllers\ProfileController::class, 'updatePhoto']);
 });

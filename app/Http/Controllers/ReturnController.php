@@ -99,7 +99,6 @@ class ReturnController extends Controller
             $returnDate = Carbon::parse($return->returned_at);
             $dueDate = Carbon::parse($return->loan->return_date);
             $isOnTime = $returnDate->lte($dueDate);
-            // Fix: Use floatDiffInDays and ceil to ensure even 1 hour late counts as 1 day
             $lateDays = $isOnTime ? 0 : ceil($returnDate->floatDiffInDays($dueDate, false) * -1);
 
             // 1. Create checklist
@@ -124,12 +123,10 @@ class ReturnController extends Controller
             $lateFine = 0;
 
             if ($isOnTime && $isPerfectCondition) {
-                // Perfect return: No fine
                 $totalFine = 0;
             } else {
-                // Determine fines
                 $conditionFine = $this->calculateConditionFine($finalCondition);
-                $lateFine = $lateDays * 15000; // 15k per day
+                $lateFine = $lateDays * 15000; 
                 $totalFine = $conditionFine + $lateFine;
             }
 

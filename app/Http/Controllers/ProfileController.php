@@ -35,20 +35,56 @@ class ProfileController extends Controller
             'email' => ['required', 'email', Rule::unique('users')->ignore($user->id)],
             'phone' => 'nullable|string|max:20',
             'username' => ['required', 'string', Rule::unique('users')->ignore($user->id)],
-            'password' => 'nullable|string|min:8|confirmed',
         ]);
 
         $data = $request->only(['full_name', 'email', 'phone', 'username']);
-
-        if ($request->filled('password')) {
-            $data['password'] = Hash::make($request->password);
-        }
 
         $user->update($data);
 
         return response()->json([
             'message' => 'Profile berhasil diupdate',
             'user' => $user->load('role')
+        ]);
+    }
+
+    /**
+     * Update the authenticated user's password.
+     */
+    public function updatePassword(Request $request)
+    {
+        $user = Auth::user();
+
+        $request->validate([
+            'current_password' => 'required|string',
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+                'confirmed',
+                'regex:/[a-z]/',
+                'regex:/[A-Z]/',
+                'regex:/[0-9]/',
+                'regex:/[@$!%*#?&]/',
+            ],
+        ]);
+
+        if (!Hash::check($request->current_password, $user->password)) {
+            return response()->json(['message' => 'Password saat ini yang Anda masukkan salah.'], 400);
+        }
+
+        $user->update([
+            'password' => Hash::make($request->password)
+        ]);
+
+        // Revoke all tokens except the current one if it exists
+        if ($request->user()->currentAccessToken()) {
+            $user->tokens()->where('id', '!=', $request->user()->currentAccessToken()->id)->delete();
+        } else {
+            $user->tokens()->delete();
+        }
+
+        return response()->json([
+            'message' => 'Password berhasil diperbarui.'
         ]);
     }
 

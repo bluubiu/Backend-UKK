@@ -58,7 +58,7 @@ class UserController extends Controller
             'phone' => $request->phone,
             'role_id' => $request->role_id,
             'is_active' => true,
-            'score' => 0,
+            'score' => 100,
         ]);
 
         // Log the activity
