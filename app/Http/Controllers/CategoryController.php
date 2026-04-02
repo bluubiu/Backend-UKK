@@ -90,6 +90,12 @@ class CategoryController extends Controller
     public function destroy(string $id)
     {
         $category = Category::findOrFail($id);
+        
+        // Prevent deletion if category has items
+        if ($category->items()->count() > 0) {
+            return response()->json(['message' => 'Kategori tidak dapat dihapus karena masih memiliki barang terkait.'], 400);
+        }
+
         $oldValues = $category->toArray();
         $category->delete(); // Soft delete
 

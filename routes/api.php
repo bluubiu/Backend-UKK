@@ -75,6 +75,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Activity Log Route
     Route::get('/activity-logs', [\App\Http\Controllers\ActivityLogController::class, 'index'])->middleware('role:admin');
+    Route::delete('/activity-logs', [\App\Http\Controllers\ActivityLogController::class, 'clear'])->middleware('role:admin');
 
     // Profile Routes
     Route::get('/profile', [\App\Http\Controllers\ProfileController::class, 'show']);

@@ -18,4 +18,13 @@ class ActivityLogController extends Controller
 
         return response()->json($logs);
     }
+
+    /**
+     * Clear all activity logs.
+     */
+    public function clear()
+    {
+        ActivityLog::truncate();
+        return response()->json(['message' => 'Semua log aktivitas berhasil dihapus']);
+    }
 }

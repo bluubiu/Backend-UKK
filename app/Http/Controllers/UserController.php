@@ -15,7 +15,10 @@ class UserController extends Controller
      */
     public function index()
     {
-        $users = User::with('role')->get();
+        $users = User::with('role')
+            ->orderBy('role_id', 'asc')
+            ->latest()
+            ->get();
         return response()->json($users);
     }
 
@@ -34,6 +37,7 @@ class UserController extends Controller
     {
         $request->validate([
             'username' => 'required|unique:users',
+            'nisn' => 'nullable|digits:10|unique:users',
             'password' => [
                 'required',
                 'string',
@@ -46,12 +50,13 @@ class UserController extends Controller
             ],
             'full_name' => 'required',
             'email' => 'required|email|unique:users',
-            'phone' => 'nullable',
+            'phone' => 'nullable|digits:13',
             'role_id' => 'required|exists:roles,id',
         ]);
 
         $user = User::create([
             'username' => $request->username,
+            'nisn' => $request->nisn,
             'password' => bcrypt($request->password),
             'full_name' => $request->full_name,
             'email' => $request->email,
@@ -93,6 +98,7 @@ class UserController extends Controller
 
         $request->validate([
             'username' => 'sometimes|unique:users,username,' . $id,
+            'nisn' => 'nullable|digits:10|unique:users,nisn,' . $id,
             'password' => [
                 'nullable',
                 'string',
@@ -105,19 +111,19 @@ class UserController extends Controller
             ],
             'full_name' => 'sometimes',
             'email' => 'sometimes|email|unique:users,email,' . $id,
-            'phone' => 'nullable',
+            'phone' => 'nullable|digits:13',
             'role_id' => 'sometimes|exists:roles,id',
             'is_active' => 'sometimes|boolean',
             'score' => 'sometimes|integer',
         ]);
 
-        $data = $request->only(['username', 'full_name', 'email', 'phone', 'role_id', 'is_active', 'score']);
+        $data = $request->only(['username', 'nisn', 'full_name', 'email', 'phone', 'role_id', 'is_active', 'score']);
 
         if ($request->filled('password')) {
             $data['password'] = bcrypt($request->password);
         }
 
-        $fieldsToTrack = ['username', 'full_name', 'email', 'phone', 'role_id', 'is_active', 'score'];
+        $fieldsToTrack = ['username', 'nisn', 'full_name', 'email', 'phone', 'role_id', 'is_active', 'score'];
         $oldValues = $user->only($fieldsToTrack);
         $user->update($data);
         $user->refresh();

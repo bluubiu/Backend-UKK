@@ -93,9 +93,9 @@ class TestLoanSeeder extends Seeder
             'notes' => 'Test return - late 2 days'
         ]);
 
-        $this->command->info('✅ Test data created!');
-        $this->command->info('📋 3 PENDING loans for approval');
-        $this->command->info('📦 2 returns for inspection (1 on-time, 1 late)');
+        $this->command->info('✅ Data berhasil dibuat!');
+        $this->command->info('📋 3 PENDING peminjaman');
+        $this->command->info('📦 2 pengembalian untuk inspeksi (1 on-time, 1 late)');
     }
 
     private function createPendingLoan($user, $item, $quantity, $loanDate, $returnDate)

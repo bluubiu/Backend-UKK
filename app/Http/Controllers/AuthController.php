@@ -47,6 +47,7 @@ class AuthController extends Controller
     {
         $request->validate([
             'username' => 'required|string|max:255|unique:users',
+            'nisn' => 'required|digits:10|unique:users',
             'password' => [
                 'required',
                 'string',
@@ -59,11 +60,12 @@ class AuthController extends Controller
             ],
             'full_name' => 'required|string|max:255',
             'email' => 'required|email|unique:users',
-            'phone' => 'required|string|max:20',
+            'phone' => 'required|digits:13',
         ]);
 
         $user = User::create([
             'username' => $request->username,
+            'nisn' => $request->nisn,
             'password' => Hash::make($request->password),
             'full_name' => $request->full_name,
             'email' => $request->email,

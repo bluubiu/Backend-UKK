@@ -33,11 +33,12 @@ class ProfileController extends Controller
         $request->validate([
             'full_name' => 'required|string|max:255',
             'email' => ['required', 'email', Rule::unique('users')->ignore($user->id)],
-            'phone' => 'nullable|string|max:20',
+            'nisn' => ['nullable', 'digits:10', Rule::unique('users')->ignore($user->id)],
+            'phone' => 'nullable|digits:13',
             'username' => ['required', 'string', Rule::unique('users')->ignore($user->id)],
         ]);
 
-        $data = $request->only(['full_name', 'email', 'phone', 'username']);
+        $data = $request->only(['full_name', 'email', 'nisn', 'phone', 'username']);
 
         $user->update($data);
 
