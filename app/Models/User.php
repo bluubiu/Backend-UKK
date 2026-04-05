@@ -30,6 +30,7 @@ class User extends Authenticatable
         'is_active',
         'score',
         'profile_photo_path',
+        'google_id',
     ];
 
     /**
