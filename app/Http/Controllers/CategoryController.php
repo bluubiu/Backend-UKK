@@ -10,26 +10,20 @@ use App\Traits\LogsActivity;
 class CategoryController extends Controller
 {
     use LogsActivity;
-    /**
-     * Display a listing of the resource.
-     */
+   
     public function index()
     {
         $categories = Category::withCount('items')->latest()->get();
         return response()->json($categories);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
+    
     public function create()
     {
         //
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+    
     public function store(Request $request)
     {
         $request->validate([
@@ -39,32 +33,25 @@ class CategoryController extends Controller
 
         $category = Category::create($request->only(['name', 'description']));
 
-        // Log the activity
         $this->logActivity('Create Category', "Admin membuat kategori: {$category->name}", null, $category->toArray());
 
         return response()->json($category, 201);
     }
 
-    /**
-     * Display the specified resource.
-     */
+   
     public function show(string $id)
     {
         $category = Category::findOrFail($id);
         return response()->json($category);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
+    
     public function edit(string $id)
     {
         //
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
+
     public function update(Request $request, string $id)
     {
         $category = Category::findOrFail($id);
@@ -84,14 +71,10 @@ class CategoryController extends Controller
         return response()->json($category);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(string $id)
     {
         $category = Category::findOrFail($id);
         
-        // Prevent deletion if category has items
         if ($category->items()->count() > 0) {
             return response()->json(['message' => 'Kategori tidak dapat dihapus karena masih memiliki barang terkait.'], 400);
         }
@@ -99,7 +82,6 @@ class CategoryController extends Controller
         $oldValues = $category->toArray();
         $category->delete(); // Soft delete
 
-        // Log the activity
         $this->logActivity('Delete Category', "Admin menghapus kategori: {$category->name}", $oldValues);
 
         return response()->json(['message' => 'Kategori berhasil dihapus']);

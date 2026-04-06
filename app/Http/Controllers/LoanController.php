@@ -14,9 +14,7 @@ use App\Traits\LogsActivity;
 class LoanController extends Controller
 {
     use LogsActivity;
-    /**
-     * list peminjaman (filter by status, user)
-     */
+
     public function index(Request $request)
     {
         $query = Loan::with(['user', 'details.item', 'returnModel.fine', 'returnModel.checklist']);
@@ -33,18 +31,14 @@ class LoanController extends Controller
         return response()->json($query->latest()->get());
     }
 
-    /**
-     * detail peminjaman
-     */
+   
     public function show($id)
     {
         $loan = Loan::with(['user', 'details.item', 'approver'])->findOrFail($id);
         return response()->json($loan);
     }
 
-    /**
-     * ajukan peminjaman (peminjam)
-     */
+ 
     public function store(Request $request)
     {
         $request->validate([
@@ -92,7 +86,6 @@ class LoanController extends Controller
 
             DB::commit();
 
-            // Log the activity
             $this->logActivity('Loan Request', "Peminjam {$user->username} mengajukan peminjaman", null, $loan->load('details')->toArray());
 
             return response()->json($loan->load('details'), 201);
@@ -103,9 +96,6 @@ class LoanController extends Controller
         }
     }
 
-    /**
-     * setujui peminjaman (petugas)
-     */
     public function approve(Request $request, $id)
     {
         $loan = Loan::with('details')->findOrFail($id);
@@ -117,7 +107,6 @@ class LoanController extends Controller
         try {
             DB::beginTransaction();
 
-            // Cek stok tersedia sebelum approve
             foreach ($loan->details as $detail) {
                 $item = Item::lockForUpdate()->find($detail->item_id); // Lock row to prevent race condition
 
@@ -129,7 +118,6 @@ class LoanController extends Controller
                     throw new \Exception("Stok tidak mencukupi untuk item: {$item->name}. Tersedia: {$item->available_stock}, Diminta: {$detail->quantity}");
                 }
 
-                // Saat approve: kurangi available_stock
                 $item->decrement('available_stock', $detail->quantity);
             }
 
@@ -151,9 +139,6 @@ class LoanController extends Controller
         }
     }
 
-    /**
-     * tolak peminjaman (petugas)
-     */
     public function reject(Request $request, $id)
     {
         $loan = Loan::findOrFail($id);
@@ -181,14 +166,11 @@ class LoanController extends Controller
         return response()->json(['message' => 'Peminjaman ditolak', 'loan' => $loan]);
     }
 
-    /**
-     * GET /api/loans/{id}/receipt - Generate loan receipt
-     */
+   
     public function receipt($id)
     {
         $loan = Loan::with(['user', 'details.item.category', 'approver'])->findOrFail($id);
 
-        // Format receipt data for easy frontend rendering
         $receipt = [
             'receipt_number' => 'LOAN-' . str_pad($loan->id, 6, '0', STR_PAD_LEFT),
             'borrower' => [

@@ -21,7 +21,6 @@ class ReportController extends Controller
     {
         $query = Loan::with(['user', 'details.item', 'approver']);
 
-        // Filter by date range
         if ($request->has('start_date')) {
             $query->where('loan_date', '>=', $request->start_date);
         }
@@ -29,19 +28,16 @@ class ReportController extends Controller
             $query->where('loan_date', '<=', $request->end_date);
         }
 
-        // Filter by user
         if ($request->has('user_id')) {
             $query->where('user_id', $request->user_id);
         }
 
-        // Filter by status
         if ($request->has('status')) {
             $query->where('status', $request->status);
         }
 
         $loans = $query->latest()->get();
 
-        // Log the activity
         $this->logActivity('Report Generation', 'Laporan peminjaman dihasilkan', null, [
             'filters' => $request->all(),
             'total_records' => $loans->count()
@@ -74,7 +70,6 @@ class ReportController extends Controller
 
         $returns = $query->latest()->get();
 
-        // Log the activity
         $this->logActivity('Report Generation', 'Laporan pengembalian dihasilkan', null, [
             'filters' => $request->all(),
             'total_records' => $returns->count()
@@ -105,7 +100,6 @@ class ReportController extends Controller
 
         $fines = $query->latest()->get();
 
-        // Log the activity
         $this->logActivity('Report Generation', 'Laporan denda dihasilkan', null, [
             'filters' => $request->all(),
             'total_records' => $fines->count()
@@ -129,15 +123,13 @@ class ReportController extends Controller
      */
     public function scores(Request $request)
     {
-        $query = User::with(['role', 'scoreLogs'])->where('role_id', '!=', 1); // Exclude admin
+        $query = User::with(['role', 'scoreLogs'])->where('role_id', '!=', 1); 
 
-        // Sort by score
-        $orderBy = $request->get('order_by', 'desc'); // desc = highest first
+        $orderBy = $request->get('order_by', 'desc'); 
         $query->orderBy('score', $orderBy);
 
         $users = $query->get();
 
-        // Log the activity
         $this->logActivity('Report Generation', 'Laporan skor peminjam dihasilkan', null, [
             'filters' => $request->all(),
             'total_records' => $users->count()
@@ -181,7 +173,6 @@ class ReportController extends Controller
 
         $items = $query->get();
 
-        // Log the activity
         $this->logActivity('Report Generation', 'Laporan kondisi alat dihasilkan', null, [
             'filters' => $request->all(),
             'total_records' => $items->count()

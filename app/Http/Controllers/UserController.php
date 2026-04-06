@@ -66,7 +66,6 @@ class UserController extends Controller
             'score' => 100,
         ]);
 
-        // Log the activity
         $this->logActivity('Create User', "Admin membuat user: {$user->username}", null, $user->toArray());
 
         return response()->json($user->load('role'), 201);
@@ -103,11 +102,11 @@ class UserController extends Controller
                 'nullable',
                 'string',
                 'min:8',
-                'confirmed', // expects password_confirmation field
-                'regex:/[a-z]/',      // must contain at least one lowercase letter
-                'regex:/[A-Z]/',      // must contain at least one uppercase letter
-                'regex:/[0-9]/',      // must contain at least one digit
-                'regex:/[@$!%*#?&]/', // must contain a special character
+                'confirmed', 
+                'regex:/[a-z]/',    
+                'regex:/[A-Z]/',    
+                'regex:/[0-9]/',      
+                'regex:/[@$!%*#?&]/', 
             ],
             'full_name' => 'sometimes',
             'email' => 'sometimes|email|unique:users,email,' . $id,
@@ -128,7 +127,6 @@ class UserController extends Controller
         $user->update($data);
         $user->refresh();
 
-        // Log the activity
         $this->logActivity('Update User', "Admin mengupdate user: {$user->username}", $oldValues, $user->only($fieldsToTrack));
 
         return response()->json($user->load('role'));
@@ -156,14 +154,11 @@ class UserController extends Controller
     {
         $user = User::findOrFail($id);
         
-        // Generate default password: [username]123#
         $defaultPassword = $user->username . '123#';
         
-        // Update password
         $user->password = bcrypt($defaultPassword);
         $user->save();
 
-        // Log the activity
         $this->logActivity('Reset Password', "Admin mereset password user: {$user->username} ke default", null, ['user_id' => $user->id]);
 
         return response()->json([

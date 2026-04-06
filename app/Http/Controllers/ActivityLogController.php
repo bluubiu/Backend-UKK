@@ -7,9 +7,6 @@ use Illuminate\Http\Request;
 
 class ActivityLogController extends Controller
 {
-    /**
-     * Display a listing of the activity logs.
-     */
     public function index()
     {
         $logs = ActivityLog::with('user.role')
@@ -19,9 +16,7 @@ class ActivityLogController extends Controller
         return response()->json($logs);
     }
 
-    /**
-     * Clear all activity logs.
-     */
+   
     public function clear()
     {
         ActivityLog::truncate();

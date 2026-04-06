@@ -107,9 +107,7 @@ class FineController extends Controller
         ]);
     }
 
-    /**
-     * PUT /api/fines/{id}/verify-payment - Officer verifies payment
-     */
+    
     public function verifyPayment(Request $request, $id)
     {
         $fine = Fine::with('returnModel.loan.user')->findOrFail($id);
@@ -120,7 +118,7 @@ class FineController extends Controller
 
         $request->validate([
             'action' => 'required|in:accept,reject',
-            'notes' => 'nullable|string' // Rejection reason if any
+            'notes' => 'nullable|string' 
         ]);
 
         $oldValues = $fine->toArray();
@@ -131,12 +129,10 @@ class FineController extends Controller
                 'verified_by' => Auth::id()
             ]);
 
-            // Add +10 Score Bonus
             $user = $fine->returnModel->loan->user;
             $scoreChange = 10;
             $newScore = $user->updateScore($scoreChange);
 
-            // Log Score Change
             ScoreLog::create([
                 'user_id' => $user->id,
                 'loan_id' => $fine->returnModel->loan->id,
@@ -144,7 +140,6 @@ class FineController extends Controller
                 'reason' => 'Pembayaran denda lunas (+10)'
             ]);
 
-            // Notification
             Notification::create([
                 'user_id' => $user->id,
                 'type' => 'score_increase',
@@ -157,22 +152,18 @@ class FineController extends Controller
                 ]
             ]);
             
-            // Log the activity
             $this->logActivity('Fine Verification', "Petugas menerima pembayaran denda ID: {$fine->id}", $oldValues, $fine->only(['is_paid', 'paid_at', 'verified_by']));
 
             return response()->json(['message' => 'Denda berhasil diverifikasi.', 'fine' => $fine]);
         } else {
-            // Reject confirmation (reset specific fields so user can try again)
             $fine->update([
                 'payment_confirmed_by_user' => false,
                 'user_payment_date' => null,
-                'user_notes' => null // Or consider keeping history? For now reset. // Or send notes back?
+                'user_notes' => null 
             ]);
             
-            // Log the activity
             $this->logActivity('Fine Verification', "Petugas menolak pembayaran denda ID: {$fine->id}", $oldValues, $fine->only(['payment_confirmed_by_user', 'user_payment_date', 'user_notes']));
 
-            // In a real app we might want to notify the user why it was rejected
             return response()->json(['message' => 'Verifikasi denda ditolak.', 'fine' => $fine]);
         }
     }

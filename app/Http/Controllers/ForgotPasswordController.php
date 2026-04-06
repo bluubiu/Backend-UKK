@@ -16,7 +16,6 @@ class ForgotPasswordController extends Controller
 
         $user = User::where('username', $request->username)->first();
 
-        // Create notification for all admins
         $admins = User::whereHas('role', function($q) {
             $q->where('name', 'admin');
         })->get();
@@ -26,7 +25,7 @@ class ForgotPasswordController extends Controller
                 'user_id' => $admin->id,
                 'title' => 'Permintaan Reset Password',
                 'message' => "User @{$user->username} ({$user->full_name}) lupa password dan meminta reset.",
-                'type' => 'alert', // or 'info'
+                'type' => 'alert', 
                 'is_read' => false,
             ]);
         }

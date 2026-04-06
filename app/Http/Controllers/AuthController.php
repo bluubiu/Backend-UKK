@@ -34,7 +34,6 @@ class AuthController extends Controller
 
         $token = $user->createToken('API Token')->plainTextToken;
 
-        // Log the activity
         $this->logActivity('Login', "User {$user->username} logged in");
 
         return response()->json([
@@ -52,11 +51,11 @@ class AuthController extends Controller
                 'required',
                 'string',
                 'min:8',
-                'confirmed', // expects password_confirmation field
-                'regex:/[a-z]/',      // must contain at least one lowercase letter
-                'regex:/[A-Z]/',      // must contain at least one uppercase letter
-                'regex:/[0-9]/',      // must contain at least one digit
-                'regex:/[@$!%*#?&]/', // must contain a special character
+                'confirmed', 
+                'regex:/[a-z]/',     
+                'regex:/[A-Z]/',      
+                'regex:/[0-9]/',      
+                'regex:/[@$!%*#?&]/', 
             ],
             'full_name' => 'required|string|max:255',
             'email' => 'required|email|unique:users',
@@ -70,14 +69,13 @@ class AuthController extends Controller
             'full_name' => $request->full_name,
             'email' => $request->email,
             'phone' => $request->phone,
-            'role_id' => 3, // Default role: user (3), Petugas (2), Admin (1)
+            'role_id' => 3, 
             'is_active' => true,
-            'score' => 100, // Initial score MUST be 100
+            'score' => 100, 
         ]);
 
         $token = $user->createToken('API Token')->plainTextToken;
 
-        // Log the activity
         $this->logActivity('Register', "User {$user->username} registered", null, $user->toArray());
 
         return response()->json([
@@ -92,7 +90,6 @@ class AuthController extends Controller
         $user = $request->user();
         $user->currentAccessToken()->delete();
 
-        // Log the activity
         $this->logActivity('Logout', "User {$user->username} logged out");
 
         return response()->json(['message' => 'Logout berhasil']);

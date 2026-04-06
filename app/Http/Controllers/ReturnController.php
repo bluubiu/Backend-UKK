@@ -33,13 +33,11 @@ class ReturnController extends Controller
 
         $loan = Loan::with('details')->findOrFail($request->loan_id);
 
-        // Verify ownership (unless admin/petugas)
         $user = Auth::user();
         if ($loan->user_id !== $user->id && !$user->hasRole(['admin', 'petugas'])) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        // Check if already returned
         if (ReturnModel::where('loan_id', $loan->id)->exists()) {
             return response()->json(['message' => 'Peminjaman ini sudah dikembalikan'], 400);
         }
@@ -47,12 +45,11 @@ class ReturnController extends Controller
         $return = ReturnModel::create([
             'loan_id' => $request->loan_id,
             'returned_at' => now(),
-            'checked_by' => null, // Will be filled by officer
-            'final_condition' => null, // Will be determined after checklist
+            'checked_by' => null, 
+            'final_condition' => null,
             'notes' => $request->notes
         ]);
 
-        // Log the activity
         $this->logActivity('Return Items', "User {$user->username} mengajukan pengembalian untuk ID Pinjaman: {$return->loan_id}", null, $return->toArray());
 
         return response()->json($return->load('loan'), 201);
@@ -95,13 +92,11 @@ class ReturnController extends Controller
         try {
             DB::beginTransaction();
 
-            // Determine if on time
             $returnDate = Carbon::parse($return->returned_at);
             $dueDate = Carbon::parse($return->loan->return_date);
             $isOnTime = $returnDate->lte($dueDate);
             $lateDays = $isOnTime ? 0 : ceil($returnDate->floatDiffInDays($dueDate, false) * -1);
 
-            // 1. Create checklist
             $checklist = ReturnChecklist::create([
                 'return_id' => $return->id,
                 'completeness' => $request->completeness,
@@ -111,12 +106,9 @@ class ReturnController extends Controller
                 'on_time' => $isOnTime
             ]);
 
-            // 2. Calculate total score and determine final condition            
             $checklistScore = $checklist->calculateScore(); // Range 4-20
             $finalCondition = $this->determineFinalCondition($checklistScore, $request->physical_damage);
 
-            // 3. Calculation of fines
-            // STRICT RULE: If everything is perfect (all 5s) AND on time -> NO FINE AT ALL
             $isPerfectCondition = ($checklistScore === 20);
             
             $conditionFine = 0;
@@ -140,14 +132,11 @@ class ReturnController extends Controller
                 ]);
             }
 
-            // 4. Update borrower score
             $scoreChange = $this->calculateScoreChange($lateDays, $finalCondition, $isPerfectCondition);
             $user = $return->loan->user;
             
-            // Use updateScore helper on User model to handle capping (0-120)
             $user->updateScore($scoreChange);
 
-            // Log score change
             ScoreLog::create([
                 'user_id' => $user->id,
                 'loan_id' => $return->loan->id,
@@ -155,16 +144,13 @@ class ReturnController extends Controller
                 'reason' => $this->getScoreReason($lateDays, $finalCondition, $isPerfectCondition)
             ]);
 
-            // 5. Return stock for each item
             foreach ($return->loan->details as $detail) {
                 $item = Item::lockForUpdate()->find($detail->item_id);
                 $item->increment('available_stock', $detail->quantity);
 
-                // 6. Process waiting list for this item
                 WaitingListController::processWaitingList($item->id, $detail->quantity);
             }
 
-            // Update return record and loan status
             $oldReturn = $return->toArray();
             $return->update([
                 'checked_by' => Auth::id(),
@@ -173,7 +159,6 @@ class ReturnController extends Controller
             
             $return->loan->update(['status' => 'returned']);
 
-            // Create Notifications
             if ($scoreChange != 0) {
                 $type = $scoreChange > 0 ? 'score_increase' : 'score_decrease';
                 $emoji = $scoreChange > 0 ? '📈' : '📉';
@@ -200,7 +185,6 @@ class ReturnController extends Controller
 
             DB::commit();
 
-            // Log the activity
             $this->logActivity('Verify Return', "Petugas memverifikasi pengembalian ID: {$return->id}. Final condition: {$finalCondition}", $oldReturn, $return->only(['checked_by', 'final_condition']));
             
             if ($totalFine > 0) {
@@ -222,28 +206,21 @@ class ReturnController extends Controller
         }
     }
 
-    /**
-     * Determine final condition based on score and physical damage
-     */
+
     private function determineFinalCondition($totalScore, $physicalDamage)
     {
-        // Total Score Range: 4 - 20 (All fields 1-5)
-        // 1=Bad, 5=Good/Excellent
-
-        // Logical check based on Physical Damage specifically (Critical Factor)
         if ($physicalDamage <= 2) {
             return 'rusak berat';
         } elseif ($physicalDamage == 3) {
             return 'rusak ringan';
         }
 
-        // General check based on Total Checklist Score
-        if ($totalScore >= 19) {
-            return 'baik'; // Very high standard for 'baik'
+        if ($totalScore >= 18) {
+            return 'baik'; 
         } elseif ($totalScore >= 14) {
             return 'perlu disterilkan';
         } else {
-            return 'rusak ringan'; // Fallback
+            return 'rusak ringan'; 
         }
     }
 
@@ -269,14 +246,10 @@ class ReturnController extends Controller
     {
         $score = 0;
 
-        // Late penalty
         if ($lateDays == 0) {
-            // On time
             if ($isPerfectCondition) {
-                // Perfect condition + on time = +5
                 $score += 5;
             } elseif ($condition === 'baik') {
-                // Good but maybe not perfect score (e.g. 19/20)
                 $score += 3;
             }
         } elseif ($lateDays >= 1 && $lateDays <= 3) {
@@ -285,7 +258,6 @@ class ReturnController extends Controller
             $score -= 20;
         }
 
-        // Condition penalty
         if ($condition === 'rusak ringan') {
             $score -= 20;
         } elseif ($condition === 'rusak berat') {

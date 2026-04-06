@@ -147,13 +147,9 @@ class WaitingListController extends Controller
         return response()->json(['message' => 'Antrian berhasil dibatalkan']);
     }
 
-    /**
-     * Process waiting list when item is returned (called internally)
-     * This would be called from ReturnController after stock is replenished
-     */
+
     public static function processWaitingList($itemId, $quantityReturned)
     {
-        // Get waiting list entries for this item, ordered by FIFO
         $waitingEntries = WaitingList::where('item_id', $itemId)
             ->where('status', 'waiting')
             ->orderBy('requested_at', 'asc')
@@ -167,35 +163,30 @@ class WaitingListController extends Controller
                 try {
                     DB::beginTransaction();
 
-                    // 1. Create a new Loan automatically
                     $loan = Loan::create([
                         'user_id' => $entry->user_id,
                         'loan_date' => now(),
-                        'return_date' => now()->addDays(7), // Default 7 days
-                        'status' => 'pending', // Waiting for admin approval as requested
+                        'return_date' => now()->addDays(7),
+                        'status' => 'pending', 
                         'approved_by' => null,
                         'approved_at' => null,
                     ]);
 
-                    // 2. Create Loan Detail
                     LoanDetail::create([
                         'loan_id' => $loan->id,
                         'item_id' => $itemId,
                         'quantity' => $entry->quantity
                     ]);
 
-                    // 3. Update Waiting List entry
                     $entry->update([
                         'status' => 'converted',
                         'loan_id' => $loan->id
                     ]);
 
-                    // 4. Decrement stock immediately to reserve it
                     $item->decrement('available_stock', $entry->quantity);
 
                     DB::commit();
 
-                    // 5. Create Activity Log
                     ActivityLog::create([
                         'action' => 'Waiting List Processing',
                         'description' => "Entri antrian untuk User ID {$entry->user_id} berhasil diubah menjadi peminjaman ID {$loan->id} untuk Item ID {$itemId}",
